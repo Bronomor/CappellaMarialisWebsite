@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cappella Marialis</title>
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="header-logo">
+            <img src="CM_logo.png" alt="Cappella Marialis Logo">
+        </div>
+        <div class="header-text">
+            <h1>CAPPELLA MARIALIS</h1>
+            <p>Zespół Wokalny przy Bazylice Mariackiej w Krakowie</p>
+        </div>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav>
+        <ul>
+            <li><a href="#zespol">Zespół</a></li>
+            <li><a href="#wesprzyj">Wesprzyj nas</a></li>
+            <li><a href="#aktualnosci">Aktualności</a></li>
+            <li><a href="#posluchaj">Posłuchaj nas</a></li>
+        </ul>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+        
+        <!-- ZESPÓŁ -->
+        <section id="zespol">
+            <h2>Zespół</h2>
+            
+            <div class="team-intro">
+                <img src="CM_zdjecie.jpg" alt="Zespół Cappella Marialis" class="team-image">
+                
+                <div class="team-short">
+                    <p> Zespół wokalny <strong>CAPPELLA MARIALIS</strong> złożony z profesjonalnych śpiewaków, został reaktywowany w 2017 roku po przeszło 150 latach nieobecności. W swojej działalności
+                    nawiązuje on do wielowiekowej tradycji muzycznej kościoła Mariackiego w Krakowie. </p>
+                </div>
+            </div>
+            
+            <button class="expand-btn" onclick="toggleTeam()">Czytaj więcej</button>
+            
+            <div class="team-full" id="teamFull">
+                <p> Zespół wokalny <strong>CAPPELLA MARIALIS</strong> złożony z profesjonalnych śpiewaków, został reaktywowany w 2017 roku po przeszło 150 latach nieobecności. <br/> W swojej działalności
+                nawiązuje on do wielowiekowej tradycji muzycznej kościoła Mariackiego w Krakowie. Repertuar zespołu stanowi muzyka liturgiczna – od chorału gregoriańskiego po dzieła kompozytorów
+                współczesnych. Śpiewacy najczęściej wykonują muzykę a cappella, czasem również z towarzyszeniem organów i orkiestry. Najważniejszym celem Cappella Marialis jest promowanie
+                wartościowej muzyki polskiej podczas liturgii i koncertów. W 2018 roku artyści odbyli dwie trasy koncertowe po Europie Zachodniej, prezentując zagranicznej publiczności dzieła polskich
+                kompozytorów. Wraz z Orkiestrą Symfoniczną Sanktuarium Bożego Miłosierdzia w Krakowie uczestniczyli m. in. w otwarciu polskiej kaplicy w katedrze Notre Dame w Paryżu, śpiewając
+                podczas uroczystej liturgii, dali także koncert muzyki K. Szymanowskiego, H. M. Góreckiego, K. Pendereckiego i H. J. Botora. Zespół wystąpił również w kościele św. Pawła w Berlinie. Cappella
+                Marialis bierze udział w festiwalach muzycznych w Polsce, reprezentując bazylikę Mariacką i jej bogate tradycje muzyczne. Zespół można usłyszeć w bazylice Mariackiej w niedziele podczas
+                mszy św. o godzinie 12.00, a także podczas innych uroczystych liturgii. W 2019 roku zespół nagrał pierwsze CD z polską muzyką sakralną. W 2025 zrealizował nagranie audiowizualne Mszy
+                Es-dur Franciszka Mireckiego, z udziałem wybitnych solistów: Sylwii Olszyńskiej, Ewy Wolak, Andrzeja Lamperta, Marcina Wolaka oraz Daniela Prajznera. Założycielem i dyrygentem zespołu
+                jest prof. Krzysztof Michałek. </p>
+
+                <h3>👤 Kierownictwo artystyczne</h3>
+                <p><strong>Założyciel i dyrygent:</strong> prof. Krzysztof Michałek</p>
+
+                <h3>📧 Kontakt</h3>
+                <p>Email: <strong>cappellamarialis@mariacki.com</strong></p>
+                
+                <button class="expand-btn" onclick="toggleTeam()">Zwiń</button>
+            </div>
+        </section>
+
+        <!-- WESPRZYJ NAS -->
+        <section id="wesprzyj">
+            <h2>Wesprzyj nas</h2>
+            <p>Zapraszamy do wsparcia naszej działalności. Państwa darowizny dają nam możliwość organizacji koncertów, nagrywania muzyki oraz promowania polskiej muzyki sakralnej w kraju i za granicą.</p>
+            
+            <div class="donation-box">
+                <h3>💝 Twoje wsparcie ma znaczenie</h3>
+                <p style="margin-bottom: 1.5rem;">Dziękujemy za każdą pomoc w realizacji naszej misji</p>
+                
+                <div class="donation-details">
+                    <p><strong>Odbiorca:</strong> Fundacja Cappella Marialis</p>
+                    <p><strong>Numer konta:</strong> 42 1240 5080 1111 0011 4413 1593</p>
+                    <p><strong>Tytuł przelewu:</strong> Darowizna - Cappella Marialis</p>
+                    <p><strong>Email:</strong> cappellamarialis@mariacki.com</p>
+                </div>
+                
+                <button class="donate-btn" onclick="alert('Dziękujemy za zainteresowanie! Wykonaj przelew na podany numer konta lub skontaktuj się z nami przez email.')">Wesprzyj nas</button>
+            </div>
+        </section>
+
+
+        <!-- AKTUALNOŚCI -->
+        <section id="aktualnosci">
+            <h2>Aktualności</h2>
+            
+            <div class="news-item">
+            <img src="CM_news.jpg" alt="zdjecie news">
+
+                <div class="news-content">
+                    <h3>Nagranie Mszy Es-dur Franciszka Mireckiego</h3>
+                    <p class="news-date">11-11-2025</p>
+                    <p>Ukończona realizacja nagrania audiowizualnego z udziałem wybitnych solistów. Premiera wkrótce!</p>
+                </div>
+            </div>
+
+            <div class="news-item">
+            <img src="CM_news.jpg" alt="zdjecie news">
+
+                <div class="news-content">
+                    <h3>Nagranie Mszy Es-dur Franciszka Mireckiego</h3>
+                    <p class="news-date">11-11-2025</p>
+                    <p>Ukończona realizacja nagrania audiowizualnego z udziałem wybitnych solistów. Premiera wkrótce!</p>
+                </div>
+            </div>
+
+            <div class="fb-link">
+                <p>📱 Śledź nasze wydarzenia na <a href="https://www.facebook.com/CappellaMarialis" target="_blank">Facebooku</a></p>
+                <p style="margin-top: 0.5rem; font-size: 0.95rem; color: #666;">Tam znajdziesz plakaty nadchodzących koncertów i relacje z występów</p>
+            </div>
+        </section>
+
+        <!-- POSŁUCHAJ NAS -->
+        <section id="posluchaj">
+            <h2>Posłuchaj nas</h2>
+            
+            <div>
+                <img src="CM_news.jpg" alt="Koncert Cappella Marialis" style="display: block; margin-left: auto; margin-right: auto; 
+                width: 95%; height: 500px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            </div>
+                        
+            <div class="listen-grid">
+                <div class="listen-item">
+                    <h3>🎥 YouTube</h3>
+                    <p>Nagrania koncertów i występów</p>
+                    <a href="https://www.youtube.com/@cappellamarialis8791" target="_blank">Otwórz YouTube</a>
+                </div>
+                
+                <div class="listen-item">
+                    <h3>🎵 Spotify</h3>
+                    <p>Słuchaj naszych nagrań</p>
+                    <a href="https://open.spotify.com/search/cappella%20marialis" target="_blank">Otwórz Spotify</a>
+                </div>
+                
+                <div class="listen-item">
+                    <h3>💿 Albumy CD</h3>
+                    <p>Polska muzyka sakralna</p>
+                    <p style="margin-top: 1rem; font-size: 0.95rem; color: #666;">Dostępne w Bazylice Mariackiej</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p style="color: #d4af37"><strong>Cappella Marialis - Zespół Wokalny przy Bazylice Mariackiej w Krakowie</strong></p>
+        <p>📧 cappellamarialis@mariacki.com 📍 Plac Mariacki 5, 31-042 Kraków</p>
+        <p style="font-size: 0.85rem; color: #999;">© 2025 Cappella Marialis. Wszelkie prawa zastrzeżone.</p>
+    </footer>
+
+    <script>
+        function toggleTeam() {
+            const teamFull = document.getElementById('teamFull');
+            teamFull.classList.toggle('active');
+            
+            // Smooth scroll do sekcji
+            if (teamFull.classList.contains('active')) {
+                setTimeout(() => {
+                    teamFull.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
+        }
+
+        // Smooth scroll dla nawigacji
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
