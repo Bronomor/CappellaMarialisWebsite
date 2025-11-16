@@ -380,6 +380,11 @@ footer {
         font-size: 2rem;
     }
 
+    nav {
+        position: static;
+        box-shadow: none;
+    }
+
     nav ul {
         grid-template-columns: 1fr;
     }
