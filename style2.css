@@ -394,6 +394,7 @@ footer {
 
     header h1 {
         font-size: 2rem;
+        display: none;
     }
 
     nav {
