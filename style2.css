@@ -352,6 +352,18 @@ section p {
     box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
 
+.image-listen-us
+{
+    display: block; 
+    margin-left: auto; 
+    margin-right: auto; 
+    width: 95%; 
+    height: 500px; 
+    object-fit: cover; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
 /* FOOTER */
 footer {
     background: #2c2c2c;
@@ -365,11 +377,14 @@ footer {
     header {
         flex-direction: column;
         text-align: center;
+        gap: 0;
     }
 
     .header-text {
         text-align: center;
-        margin-top: 1rem;
+        margin-bottom: 1rem;
+        margin-top: 0;
+        padding: 0;
     }
 
     .header-logo {
@@ -391,7 +406,7 @@ footer {
     }
 
     nav a {
-        padding: 1.2rem;
+        padding: 0.5rem;
         font-size: 1.25rem;
         border-bottom: 1px solid rgba(255,255,255,0.2);
     }
@@ -419,5 +434,44 @@ footer {
 
     .team-image {
         height: 300px;
+    }
+
+    .donation-box {
+        background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 50%, #16213e 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .donation-details {
+        padding: 0.2rem;
+    }
+
+    .news-item {
+        background: #f0f0f0;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 5px;
+        border-left: 4px solid #d4af37;
+        display: block;
+    }
+
+    .news-item img {
+        width: 100%;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .news-content {
+        width: 100%;
+    }
+
+    .image-listen-us
+    {
+        width: 95%; 
+        height: 250px; 
+        object-fit: cover; 
     }
 }
