@@ -197,7 +197,40 @@
         });
     </script>
 
-<script>
+<!-- Facebook feed -->
+ <script>
+function showFbPlugin(container) {
+    const pageUrl = 'https://www.facebook.com/CappellaMarialis';
+
+    container.innerHTML = `
+        <div id="fb-root"></div>
+        <div class="fb-page"
+             data-href="${pageUrl}"
+             data-tabs="timeline"
+             data-width="500"
+             data-height=""
+             data-small-header="false"
+             data-adapt-container-width="true"
+             data-hide-cover="false"
+             data-show-facepile="true">
+            <blockquote cite="${pageUrl}" class="fb-xfbml-parse-ignore">
+                <a href="${pageUrl}">Cappella Marialis</a>
+            </blockquote>
+        </div>
+    `;
+
+    // Doładuj SDK, jeśli jeszcze go nie ma
+    if (!document.getElementById('facebook-jssdk')) {
+        const js = document.createElement('script');
+        js.id = 'facebook-jssdk';
+        js.src = "https://connect.facebook.net/pl_PL/sdk.js#xfbml=1&version=v21.0";
+        document.body.appendChild(js);
+    } else if (window.FB && FB.XFBML && FB.XFBML.parse) {
+        // Jeśli SDK już jest – przetwórz nowy HTML
+        FB.XFBML.parse(container);
+    }
+}
+
 async function loadFacebookNews() {
     const container = document.getElementById('fb-news');
     if (!container) return;
@@ -205,6 +238,12 @@ async function loadFacebookNews() {
     try {
         const response = await fetch('facebook-news.php');
         const posts = await response.json();
+
+        // Jeśli serwer zwrócił błąd albo nie ma tablicy postów → fallback
+        if (!Array.isArray(posts) || posts.length === 0 || posts.error) {
+            showFbPlugin(container);
+            return;
+        }
 
         // Pokaż tylko 3 najnowsze posty
         const latest = posts.slice(0, 3);
@@ -217,12 +256,18 @@ async function loadFacebookNews() {
             let dateText = '';
             if (post.date) {
                 const d = new Date(post.date);
-                dateText = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+                if (!isNaN(d.getTime())) {
+                    dateText =
+                        String(d.getDate()).padStart(2, '0') + '-' +
+                        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                        d.getFullYear();
+                }
             }
 
-            const imgHtml = post.image ? `<img src="${post.image}" alt="">` : '';
+            const imgHtml = post.image
+                ? `<img src="${post.image}" alt="">`
+                : '';
 
-            // jeśli jest link do posta – dodamy przycisk
             const linkButton = post.link
                 ? `<a href="${post.link}" target="_blank" class="news-link">Zobacz na Facebooku</a>`
                 : '';
@@ -240,12 +285,15 @@ async function loadFacebookNews() {
             container.appendChild(item);
         });
     } catch (e) {
-        console.error('Błąd pobierania z Facebooka:', e);
+        console.error('Błąd pobierania z RSS / PHP:', e);
+        // Jeśli fetch/JSON się wywali – pokaż Page Plugin
+        showFbPlugin(container);
     }
 }
 
 window.addEventListener('DOMContentLoaded', loadFacebookNews);
 </script>
+
 
 </body>
 </html>

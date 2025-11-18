@@ -1,83 +1,155 @@
 <?php
 
-// Wczytujemy dane z pliku config.php
+// Wczytujemy konfigurację
 $config = require __DIR__ . '/config.php';
 
-// Ustawiamy zmienne na podstawie configu
-$pageId = $config['facebook_page_id'];
-$accessToken = $config['facebook_access_token'];
-$limit = (int)$config['posts_limit'];
+$rssUrl   = $config['facebook_rss_url']  ?? '';
+$pageUrl  = $config['facebook_page_url'] ?? '';
+$limit    = (int)($config['posts_limit'] ?? 3);
 
-$url = "https://graph.facebook.com/v21.0/{$pageId}/posts" .
-       "?fields=message,story,created_time,full_picture,permalink_url" .
-       "&limit={$limit}&access_token={$accessToken}";
+// Ustawienia cache
+$cacheDir  = __DIR__ . '/cache';
+$cacheFile = $cacheDir . '/facebook-news.json';
+// ważność cache, np. 1 godzina
+$cacheTtl  = 3600;
 
-// KONTEKST z ignore_errors, żeby zobaczyć treść odpowiedzi nawet przy 400
+header('Content-Type: application/json; charset=utf-8');
+
+// Tworzymy katalog cache, jeśli nie istnieje
+if (!is_dir($cacheDir)) {
+    @mkdir($cacheDir, 0775, true);
+}
+
+// 1. Jeśli jest świeży cache → zwróć go i zakończ
+if (file_exists($cacheFile)) {
+    $age = time() - filemtime($cacheFile);
+    if ($age < $cacheTtl) {
+        $data = file_get_contents($cacheFile);
+        if ($data !== false && $data !== '') {
+            echo $data;
+            exit;
+        }
+    }
+}
+
+// Jeśli nie ma URL-a RSS w configu
+if (!$rssUrl) {
+    echo json_encode([
+        'error' => 'no_rss_url',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// 2. Próba pobrania RSS
 $context = stream_context_create([
     'http' => [
         'ignore_errors' => true,
+        'header'        => "User-Agent: CappellaMarialisSite/1.0\r\n",
+        'timeout'       => 10,
     ]
 ]);
 
-$response = file_get_contents($url, false, $context);
+$rssContent = @file_get_contents($rssUrl, false, $context);
 
-if ($response === false) {
-    echo json_encode(['error' => 'request_failed', 'details' => 'Nie udało się pobrać danych z Facebooka (brak odpowiedzi)'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-$data = json_decode($response, true);
-
-// Jeśli Facebook zwrócił błąd – pokażmy go ładnie
-if (isset($data['error'])) {
-    echo json_encode([
-        'error'   => 'fb_error',
-        'details' => $data['error']
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-// Jeśli nie ma "data" – coś nie tak z odpowiedzią
-if (!isset($data['data']) || !is_array($data['data'])) {
-    echo json_encode([
-        'error' => 'no_data_field',
-        'raw'   => $data
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-// Normalne przetwarzanie postów
-$posts = [];
-
-foreach ($data['data'] as $post) {
-    // Tekst posta: message albo story
-    $text = '';
-    if (!empty($post['message'])) {
-        $text = $post['message'];
-    } elseif (!empty($post['story'])) {
-        $text = $post['story'];
-    } else {
-        continue;
+if ($rssContent === false || trim($rssContent) === '') {
+    // 3a. Jak pobranie RSS padło, ale mamy stary cache → zwróć cache
+    if (file_exists($cacheFile)) {
+        $data = file_get_contents($cacheFile);
+        if ($data !== false && $data !== '') {
+            echo $data;
+            exit;
+        }
     }
 
-    $lines = preg_split("/\r\n|\n|\r/", $text);
-    $title = trim($lines[0]);
+    // 3b. Nie ma RSS i nie ma cache → błąd (front zrobi fallback na FB plugin)
+    echo json_encode([
+        'error' => 'rss_fetch_failed',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// 4. Parsowanie RSS
+$xml = @simplexml_load_string($rssContent);
+
+if ($xml === false || !isset($xml->channel->item)) {
+    // znów próba użycia starego cache
+    if (file_exists($cacheFile)) {
+        $data = file_get_contents($cacheFile);
+        if ($data !== false && $data !== '') {
+            echo $data;
+            exit;
+        }
+    }
+
+    echo json_encode([
+        'error' => 'rss_parse_failed',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+$posts = [];
+$count = 0;
+
+foreach ($xml->channel->item as $item) {
+    if ($count >= $limit) break;
+
+    $title = trim((string)$item->title);
+    $body  = (string)$item->description;
+    $date  = (string)$item->pubDate;
+    $link  = (string)$item->link;
+
+    // Szukanie obrazka
+    $image = '';
+
+    // <media:content>
+    $media = $item->children('media', true);
+    if ($media && isset($media->content)) {
+        $attrs = $media->content->attributes();
+        if (isset($attrs['url'])) {
+            $image = (string)$attrs['url'];
+        }
+    }
+
+    // <enclosure>
+    if (!$image && isset($item->enclosure)) {
+        $image = (string)$item->enclosure['url'];
+    }
+
+    // <img> w opisie
+    if (!$image && preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $body, $m)) {
+        $image = $m[1];
+    }
+
+    // Tekst bez HTML
+    $bodyText = trim(strip_tags($body));
+
+    // Jeśli brak tytułu, spróbuj wziąć pierwszą linijkę tekstu
+    if (!$title && $bodyText) {
+        $lines = preg_split("/\r\n|\n|\r/", $bodyText);
+        $title = trim($lines[0] ?? '');
+    }
+
+    // Przycięcie długości
     if (mb_strlen($title) > 80) {
         $title = mb_substr($title, 0, 77) . '...';
     }
-
-    $body = trim($text);
-    if (mb_strlen($body) > 300) {
-        $body = mb_substr($body, 0, 297) . '...';
+    if (mb_strlen($bodyText) > 300) {
+        $bodyText = mb_substr($bodyText, 0, 297) . '...';
     }
 
     $posts[] = [
         'title' => $title,
-        'body'  => $body,
-        'date'  => $post['created_time'] ?? '',
-        'image' => $post['full_picture'] ?? '',
-        'link'  => $post['permalink_url'] ?? '',
+        'body'  => $bodyText,
+        'date'  => $date,
+        'image' => $image,
+        'link'  => $link ?: $pageUrl,
     ];
+
+    $count++;
 }
 
-echo json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+// 5. Zapis do cache + odpowiedź
+$json = json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+@file_put_contents($cacheFile, $json);
+
+echo $json;

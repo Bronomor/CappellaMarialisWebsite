@@ -1,0 +1,1 @@
+upewnij się, że PHP może tam pisać (zwykle wystarczy standardowe 755 / 775).
