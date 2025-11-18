@@ -7,13 +7,7 @@
     <link rel="stylesheet" href="style2.css">
 </head>
 <body>
-
-    <!-- FACEBOOK SDK -->
-    <div id="fb-root"></div>
-    <script async defer crossorigin="anonymous"
-            src="https://connect.facebook.net/pl_PL/sdk.js#xfbml=1&version=v24.0">
-    </script>
-
+   
     <!-- HEADER -->
     <header>
         <div class="header-logo">
@@ -106,6 +100,8 @@
         <!-- AKTUALNOŚCI -->
         <section id="aktualnosci">
             <h2>Aktualności</h2>
+
+            <div id="fb-news"></div>
             
             <div class="news-item">
             <img src="CM_news.jpg" alt="zdjecie news">
@@ -132,27 +128,7 @@
                 <p style="margin-top: 0.5rem; font-size: 0.95rem; color: #666;">Tam znajdziesz plakaty nadchodzących koncertów i relacje z występów</p>
             </div>
 
-            <!-- Dodanie Facebook embeded plugin https://developers.facebook.com/docs/plugins/page-plugin/ -->
-            <div class="fb-wrapper">
-    <div class="fb-page"
-         data-href="https://www.facebook.com/CappellaMarialis"
-         data-tabs="timeline, events"
-         data-width="500" 
-         data-height="700"
-         data-small-header="true"
-         data-adapt-container-width="true"
-         data-hide-cover="false" 
-         data-show-facepile="true">
-        <blockquote cite="https://www.facebook.com/CappellaMarialis"
-                    class="fb-xfbml-parse-ignore">
-            <a href="https://www.facebook.com/CappellaMarialis">Cappella Marialis</a>
-        </blockquote>
-    </div>
-</div>
-
-<div id="fb-news"></div>
-
-
+            
         </section>
 
         <!-- POSŁUCHAJ NAS -->
@@ -219,7 +195,7 @@
             });
         });
     </script>
-</body>
+
 <script>
 async function loadFacebookNews() {
     const container = document.getElementById('fb-news');
@@ -229,19 +205,34 @@ async function loadFacebookNews() {
         const response = await fetch('facebook-news.php');
         const posts = await response.json();
 
-        posts.forEach(post => {
+        // Pokaż tylko 3 najnowsze posty
+        const latest = posts.slice(0, 3);
+
+        latest.forEach(post => {
             const item = document.createElement('div');
             item.className = 'news-item';
 
-            const d = new Date(post.date);
-            const dateText = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+            // Format daty
+            let dateText = '';
+            if (post.date) {
+                const d = new Date(post.date);
+                dateText = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+            }
+
+            const imgHtml = post.image ? `<img src="${post.image}" alt="">` : '';
+
+            // jeśli jest link do posta – dodamy przycisk
+            const linkButton = post.link
+                ? `<a href="${post.link}" target="_blank" class="news-link">Zobacz na Facebooku</a>`
+                : '';
 
             item.innerHTML = `
-                ${post.image ? `<img src="${post.image}" alt="">` : ""}
+                ${imgHtml}
                 <div class="news-content">
                     <h3>${post.title}</h3>
                     <p class="news-date">${dateText}</p>
                     <p>${post.body}</p>
+                    ${linkButton}
                 </div>
             `;
 
@@ -255,4 +246,5 @@ async function loadFacebookNews() {
 window.addEventListener('DOMContentLoaded', loadFacebookNews);
 </script>
 
+</body>
 </html>

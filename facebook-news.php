@@ -2,43 +2,83 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // ***********************************
-// WSTAW SWÓJ PAGE ACCESS TOKEN TUTAJ
-$pageId      = 'CappellaMarialis'; 
-$accessToken = 'EAAVl346pMRgBPZBUd7SZCkLZBNz5xJE1JRE330iyBeTXxguHjweJBZBqdxa0VYfhVTRneEUbItUI9T6ZAfmKZASmn7T48ZBtZAabNI71BHE6VNr2M4FZB7yDyaPWiEeRMb7e7VInp78ehhsR9CKLOqc36HJQpXAVfelxt0S2rlviTihEs744tBx3l68kZArXi7pZCDZCgh97iJ8RweZAQ21ZCdFZA3ZBOzrgoFDmZA3cNGyzP1crRqEbzpRXP3JtD2PQn0ZCUmBeyZAJr8hFaYIXHwfoIMztNmdgZBDd';
+// UZUPEŁNIJ TE LINIE
+$pageId      = '887291941135055'; // NUMERYCZNE ID STRONY z Graph API Explorer
+$accessToken = 'EAAVl346pMRgBP1XGPJZCCBFw0CqPNbcUEzQM5bNQcWJGQu0EcM38oZC9ZA04w4hWZBOaFPLiNIwvdxK8Vt1mB42Xba5gXGIUk4RNqOErBZCeHmZC4py876sLoZCBBbLevAhQvZBPSYsBTwZC0KpMnbvD1LXOj6OQDDAoq0F8lYUZBkc7vvZCyvAT6ZBQRUqGPmLatxAnBtKG76P5L3lyZCtqwsEZCD1wafDpbUjitkxZBZCOv4NbxTQZD';
 // ***********************************
 
-$limit = 5;
+$limit = 10;
 
-$url = "https://graph.facebook.com/v21.0/$pageId/posts" .
-       "?fields=message,created_time,full_picture,permalink_url" .
-       "&limit=$limit&access_token=$accessToken";
+$url = "https://graph.facebook.com/v21.0/{$pageId}/posts" .
+       "?fields=message,story,created_time,full_picture,permalink_url" .
+       "&limit={$limit}&access_token={$accessToken}";
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$response = curl_exec($ch);
-curl_close($ch);
+// KONTEKST z ignore_errors, żeby zobaczyć treść odpowiedzi nawet przy 400
+$context = stream_context_create([
+    'http' => [
+        'ignore_errors' => true,
+    ]
+]);
+
+$response = file_get_contents($url, false, $context);
+
+if ($response === false) {
+    echo json_encode(['error' => 'request_failed', 'details' => 'Nie udało się pobrać danych z Facebooka (brak odpowiedzi)'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
 
 $data = json_decode($response, true);
+
+// Jeśli Facebook zwrócił błąd – pokażmy go ładnie
+if (isset($data['error'])) {
+    echo json_encode([
+        'error'   => 'fb_error',
+        'details' => $data['error']
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// Jeśli nie ma "data" – coś nie tak z odpowiedzią
+if (!isset($data['data']) || !is_array($data['data'])) {
+    echo json_encode([
+        'error' => 'no_data_field',
+        'raw'   => $data
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// Normalne przetwarzanie postów
 $posts = [];
 
-if (isset($data['data'])) {
-    foreach ($data['data'] as $post) {
-        if (empty($post['message'])) continue;
-
-        $body = $post['message'];
-        if (mb_strlen($body) > 300) {
-            $body = mb_substr($body, 0, 297) . '...';
-        }
-
-        $posts[] = [
-            'title' => explode("\n", $post['message'])[0],
-            'body'  => $body,
-            'date'  => $post['created_time'] ?? '',
-            'image' => $post['full_picture'] ?? '',
-            'link'  => $post['permalink_url'] ?? '',
-        ];
+foreach ($data['data'] as $post) {
+    // Tekst posta: message albo story
+    $text = '';
+    if (!empty($post['message'])) {
+        $text = $post['message'];
+    } elseif (!empty($post['story'])) {
+        $text = $post['story'];
+    } else {
+        continue;
     }
+
+    $lines = preg_split("/\r\n|\n|\r/", $text);
+    $title = trim($lines[0]);
+    if (mb_strlen($title) > 80) {
+        $title = mb_substr($title, 0, 77) . '...';
+    }
+
+    $body = trim($text);
+    if (mb_strlen($body) > 300) {
+        $body = mb_substr($body, 0, 297) . '...';
+    }
+
+    $posts[] = [
+        'title' => $title,
+        'body'  => $body,
+        'date'  => $post['created_time'] ?? '',
+        'image' => $post['full_picture'] ?? '',
+        'link'  => $post['permalink_url'] ?? '',
+    ];
 }
 
 echo json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
