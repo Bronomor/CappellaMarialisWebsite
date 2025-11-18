@@ -4,7 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 // ***********************************
 // UZUPEŁNIJ TE LINIE
 $pageId      = '887291941135055'; // NUMERYCZNE ID STRONY z Graph API Explorer
-$accessToken = 'EAAVl346pMRgBP1XGPJZCCBFw0CqPNbcUEzQM5bNQcWJGQu0EcM38oZC9ZA04w4hWZBOaFPLiNIwvdxK8Vt1mB42Xba5gXGIUk4RNqOErBZCeHmZC4py876sLoZCBBbLevAhQvZBPSYsBTwZC0KpMnbvD1LXOj6OQDDAoq0F8lYUZBkc7vvZCyvAT6ZBQRUqGPmLatxAnBtKG76P5L3lyZCtqwsEZCD1wafDpbUjitkxZBZCOv4NbxTQZD';
+$accessToken = 'EAAVl346pMRgBPynvg889Q5bhhXZAYgxSynuo4VpFKoImBMTmwhMpdle64Q5X68UnDTZAqFKKJTf3D9siWZBwfp5ehOhm93RrciOdWCGwgXQZATXY9jRKBAc6izF3i8NoU2GUU5olxZAX7ATZBZA2k0n91LzLmaiykR1zHOMuZAYSauENisZC1mFUfvHVmVnRckyi7gVj7kKstiNEQWdZAZBN33GZArsiMn68rlD3ikZBlT8wZD';
 // ***********************************
 
 $limit = 10;
