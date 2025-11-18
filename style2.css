@@ -536,4 +536,42 @@ footer {
         height: 250px; 
         object-fit: cover; 
     }
+
+    /* eksperymentalny dodatek */
+    @media (max-width: 768px) {
+
+    /* Aktualności z Facebooka – wygląd na telefonach */
+
+    .news-item {
+        flex-direction: column;      /* zamiast obok siebie – jeden pod drugim */
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .news-item img {
+        width: 100%;                /* obrazek na całą szerokość */
+        max-height: 220px;          /* żeby nie był gigantyczny */
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .news-content {
+        width: 100%;
+    }
+
+    .news-content h3 {
+        font-size: 1.1rem;
+    }
+
+    .news-date {
+        font-size: 0.85rem;
+    }
+
+    .news-link {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 0.85rem;
+    }
+}
+
 }
