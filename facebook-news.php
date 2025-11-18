@@ -1,13 +1,12 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 
-// ***********************************
-// UZUPEŁNIJ TE LINIE
-$pageId      = '887291941135055'; // NUMERYCZNE ID STRONY z Graph API Explorer
-$accessToken = 'EAAVl346pMRgBPynvg889Q5bhhXZAYgxSynuo4VpFKoImBMTmwhMpdle64Q5X68UnDTZAqFKKJTf3D9siWZBwfp5ehOhm93RrciOdWCGwgXQZATXY9jRKBAc6izF3i8NoU2GUU5olxZAX7ATZBZA2k0n91LzLmaiykR1zHOMuZAYSauENisZC1mFUfvHVmVnRckyi7gVj7kKstiNEQWdZAZBN33GZArsiMn68rlD3ikZBlT8wZD';
-// ***********************************
+// Wczytujemy dane z pliku config.php
+$config = require __DIR__ . '/config.php';
 
-$limit = 10;
+// Ustawiamy zmienne na podstawie configu
+$pageId = $config['facebook_page_id'];
+$accessToken = $config['facebook_access_token'];
+$limit = (int)$config['posts_limit'];
 
 $url = "https://graph.facebook.com/v21.0/{$pageId}/posts" .
        "?fields=message,story,created_time,full_picture,permalink_url" .
