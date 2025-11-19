@@ -3,7 +3,7 @@
 
 session_start();
 
-$config = require __DIR__ . '/config.php';
+$config = require __DIR__ . '/../config.php';
 
 $appId       = $config['facebook_app_id'] ?? null;
 $appSecret   = $config['facebook_app_secret'] ?? null;

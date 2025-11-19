@@ -3,7 +3,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // Wczytujemy dane z pliku config.php
-$config = require __DIR__ . '/config.php';
+$config = require __DIR__ . '/../config.php';
 
 // Ustawiamy zmienne na podstawie configu
 $pageId      = $config['facebook_page_id']      ?? null;
@@ -11,7 +11,7 @@ $accessToken = $config['facebook_access_token'] ?? null;
 $limit       = (int)($config['posts_limit']     ?? 3);
 
 // Plik cache (w tym samym katalogu)
-$cacheFile   = __DIR__ . '/facebook-news-cache.json';
+$cacheFile   = __DIR__ . '/cache/facebook-news-cache.json';
 
 // Ile godzin cache ma być uznany za "świeży"
 $maxAgeHours = $config['cache_refresh_hours'] ?? 1;
