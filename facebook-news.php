@@ -11,7 +11,11 @@ $accessToken = $config['facebook_access_token'] ?? null;
 $limit       = (int)($config['posts_limit']     ?? 3);
 
 // Plik cache (w tym samym katalogu)
-$cacheFile = __DIR__ . '/facebook-news-cache.json';
+$cacheFile   = __DIR__ . '/facebook-news-cache.json';
+
+// Ile godzin cache ma być uznany za "świeży"
+$maxAgeHours = $config['cache_refresh_hours'] ?? 1;
+$maxAge      = $maxAgeHours * 3600; // w sekundach
 
 // =========================
 // FUNKCJE CACHE
@@ -54,7 +58,6 @@ function load_cache(string $file): ?array
 // =========================
 
 if (!$pageId || !$accessToken) {
-    // nie ma sensu cache bez poprawnej konfiguracji
     echo json_encode([
         'error'   => 'config_error',
         'message' => 'Brak pageId lub accessToken w config.php'
@@ -63,27 +66,39 @@ if (!$pageId || !$accessToken) {
 }
 
 // =========================
-// BUDOWANIE URL DO API
+// 1. JEŚLI CACHE JEST ŚWIEŻY → ZWRÓĆ GO I NIE PYTAJ FACEBOOKA
+// =========================
+
+if (is_file($cacheFile)) {
+    $fileAge = time() - filemtime($cacheFile);
+
+    if ($fileAge < $maxAge) {
+        $cached = load_cache($cacheFile);
+        if ($cached !== null) {
+            echo json_encode($cached, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+    }
+}
+
+// =========================
+// 2. CACHE STARY / BRAK CACHE → PROBUJEMY POBRAĆ Z API
 // =========================
 
 $url = "https://graph.facebook.com/v21.0/{$pageId}/posts" .
        "?fields=message,story,created_time,full_picture,permalink_url" .
        "&limit={$limit}&access_token={$accessToken}";
 
-// KONTEKST z ignore_errors, żeby zobaczyć treść odpowiedzi nawet przy 400
+// KONTEKST z ignore_errors, żeby zobaczyć odpowiedź nawet przy 400
 $context = stream_context_create([
     'http' => [
         'ignore_errors' => true,
     ]
 ]);
 
-// =========================
-// PROBA POBRANIA Z API
-// =========================
-
 $response = @file_get_contents($url, false, $context);
 
-// --- jeśli request w ogóle się nie udał (np. brak internetu, DNS, itp.)
+// --- request w ogóle się nie udał (np. brak internetu, DNS, itp.)
 if ($response === false) {
     $cached = load_cache($cacheFile);
     if ($cached !== null) {
@@ -100,7 +115,7 @@ if ($response === false) {
 
 $data = json_decode($response, true);
 
-// --- Jeśli Facebook zwrócił błąd – spróbujmy użyć cache
+// --- Facebook zwrócił błąd (np. token wywalony)
 if (isset($data['error'])) {
     $cached = load_cache($cacheFile);
     if ($cached !== null) {
@@ -108,7 +123,6 @@ if (isset($data['error'])) {
         exit;
     }
 
-    // Brak cache – pokaż pełny błąd
     echo json_encode([
         'error'   => 'fb_error',
         'details' => $data['error'],
@@ -116,7 +130,7 @@ if (isset($data['error'])) {
     exit;
 }
 
-// Jeśli nie ma "data" – coś nie tak z odpowiedzią
+// --- Brak pola "data" w odpowiedzi
 if (!isset($data['data']) || !is_array($data['data'])) {
     $cached = load_cache($cacheFile);
     if ($cached !== null) {
@@ -132,8 +146,8 @@ if (!isset($data['data']) || !is_array($data['data'])) {
 }
 
 // =========================
-// NORMALNE PRZETWARZANIE POSTÓW
-// (LOGIKA TYTUŁÓW I TREŚCI JAK W TWOIM ORYGINALE)
+// 3. NORMALNE PRZETWARZANIE POSTÓW
+// (LOGIKA TYTUŁÓW I TREŚCI JAK OPISYWAŁEŚ: 1. linia, 80 znaków, body 300)
 // =========================
 
 $posts = [];
@@ -154,7 +168,7 @@ foreach ($data['data'] as $post) {
     $lines = preg_split("/\r\n|\n|\r/", $text);
     $title = trim($lines[0]);
 
-    // Przytnij tytuł do 80 znaków (jak miałeś)
+    // Przytnij tytuł do 80 znaków
     if (mb_strlen($title) > 80) {
         $title = mb_substr($title, 0, 77) . '...';
     }
@@ -175,7 +189,7 @@ foreach ($data['data'] as $post) {
 }
 
 // =========================
-// ZAPIS DO CACHE + ODPOWIEDŹ
+// 4. ZAPIS DO CACHE + ODPOWIEDŹ
 // =========================
 
 if (!empty($posts)) {
