@@ -1,12 +1,70 @@
 <?php
 
+header('Content-Type: application/json; charset=utf-8');
+
 // Wczytujemy dane z pliku config.php
 $config = require __DIR__ . '/config.php';
 
 // Ustawiamy zmienne na podstawie configu
-$pageId = $config['facebook_page_id'];
-$accessToken = $config['facebook_access_token'];
-$limit = (int)$config['posts_limit'];
+$pageId      = $config['facebook_page_id']      ?? null;
+$accessToken = $config['facebook_access_token'] ?? null;
+$limit       = (int)($config['posts_limit']     ?? 3);
+
+// Plik cache (w tym samym katalogu)
+$cacheFile = __DIR__ . '/facebook-news-cache.json';
+
+// =========================
+// FUNKCJE CACHE
+// =========================
+
+function save_cache(string $file, array $posts): void
+{
+    $payload = [
+        'cached_at' => time(),
+        'posts'     => $posts,
+    ];
+
+    @file_put_contents(
+        $file,
+        json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+    );
+}
+
+function load_cache(string $file): ?array
+{
+    if (!is_file($file)) {
+        return null;
+    }
+
+    $raw = @file_get_contents($file);
+    if ($raw === false) {
+        return null;
+    }
+
+    $data = json_decode($raw, true);
+    if (!is_array($data) || !isset($data['posts']) || !is_array($data['posts'])) {
+        return null;
+    }
+
+    return $data['posts'];
+}
+
+// =========================
+// WALIDACJA KONFIGU
+// =========================
+
+if (!$pageId || !$accessToken) {
+    // nie ma sensu cache bez poprawnej konfiguracji
+    echo json_encode([
+        'error'   => 'config_error',
+        'message' => 'Brak pageId lub accessToken w config.php'
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// =========================
+// BUDOWANIE URL DO API
+// =========================
 
 $url = "https://graph.facebook.com/v21.0/{$pageId}/posts" .
        "?fields=message,story,created_time,full_picture,permalink_url" .
@@ -19,26 +77,53 @@ $context = stream_context_create([
     ]
 ]);
 
-$response = file_get_contents($url, false, $context);
+// =========================
+// PROBA POBRANIA Z API
+// =========================
 
+$response = @file_get_contents($url, false, $context);
+
+// --- jeśli request w ogóle się nie udał (np. brak internetu, DNS, itp.)
 if ($response === false) {
-    echo json_encode(['error' => 'request_failed', 'details' => 'Nie udało się pobrać danych z Facebooka (brak odpowiedzi)'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $cached = load_cache($cacheFile);
+    if ($cached !== null) {
+        echo json_encode($cached, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    echo json_encode([
+        'error'   => 'request_failed',
+        'message' => 'Nie udało się pobrać danych z Facebooka i brak cache.'
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 $data = json_decode($response, true);
 
-// Jeśli Facebook zwrócił błąd – pokażmy go ładnie
+// --- Jeśli Facebook zwrócił błąd – spróbujmy użyć cache
 if (isset($data['error'])) {
+    $cached = load_cache($cacheFile);
+    if ($cached !== null) {
+        echo json_encode($cached, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    // Brak cache – pokaż pełny błąd
     echo json_encode([
         'error'   => 'fb_error',
-        'details' => $data['error']
+        'details' => $data['error'],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 // Jeśli nie ma "data" – coś nie tak z odpowiedzią
 if (!isset($data['data']) || !is_array($data['data'])) {
+    $cached = load_cache($cacheFile);
+    if ($cached !== null) {
+        echo json_encode($cached, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     echo json_encode([
         'error' => 'no_data_field',
         'raw'   => $data
@@ -46,7 +131,11 @@ if (!isset($data['data']) || !is_array($data['data'])) {
     exit;
 }
 
-// Normalne przetwarzanie postów
+// =========================
+// NORMALNE PRZETWARZANIE POSTÓW
+// (LOGIKA TYTUŁÓW I TREŚCI JAK W TWOIM ORYGINALE)
+// =========================
+
 $posts = [];
 
 foreach ($data['data'] as $post) {
@@ -57,15 +146,20 @@ foreach ($data['data'] as $post) {
     } elseif (!empty($post['story'])) {
         $text = $post['story'];
     } else {
+        // jeśli nie ma żadnego tekstu, pomijamy post
         continue;
     }
 
+    // Tytuł = pierwsza linia tekstu
     $lines = preg_split("/\r\n|\n|\r/", $text);
     $title = trim($lines[0]);
+
+    // Przytnij tytuł do 80 znaków (jak miałeś)
     if (mb_strlen($title) > 80) {
         $title = mb_substr($title, 0, 77) . '...';
     }
 
+    // Treść = cały tekst, przycięty do 300 znaków
     $body = trim($text);
     if (mb_strlen($body) > 300) {
         $body = mb_substr($body, 0, 297) . '...';
@@ -80,4 +174,14 @@ foreach ($data['data'] as $post) {
     ];
 }
 
+// =========================
+// ZAPIS DO CACHE + ODPOWIEDŹ
+// =========================
+
+if (!empty($posts)) {
+    save_cache($cacheFile, $posts);
+}
+
 echo json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+exit;
+
